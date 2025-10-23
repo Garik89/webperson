@@ -1,0 +1,18 @@
+
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Человек</title>
+</head>
+<body>
+<!-- Имя -->
+<p>Имя: <span th:text="${person.name}">Иван</span></p>
+<!-- ID -->
+<p>ID: <span th:text="${person.id}">123</span></p>
+<!-- Email -->
+<p>Email: <span th:text="${person.email}">ivan@example.com</span></p>
+<!-- Возраст -->
+<p>Возраст: <span th:text="${person.age}">54</span></p>
+</body>
+</html>
