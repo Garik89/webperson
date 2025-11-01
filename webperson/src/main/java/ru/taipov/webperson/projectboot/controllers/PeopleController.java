@@ -1,5 +1,6 @@
 package ru.taipov.webperson.projectboot.controllers;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -47,7 +48,7 @@ public class PeopleController {
 
     @PostMapping()
     public String create( /*@ModelAttribute("person")*/ @RequestBody @Valid PersonDTO personDTO,
-                         BindingResult bindingResult) {
+                         BindingResult bindingResult) throws JsonProcessingException {
         if (bindingResult.hasErrors())
             return "people/new";
 
@@ -74,7 +75,7 @@ public class PeopleController {
     }
 
     @DeleteMapping("/{id}")
-    public String delete(@PathVariable("id") int id) {
+    public String delete(@PathVariable("id") int id) throws JsonProcessingException {
         peopleService.delete(id);
         return "redirect:/people";
     }
