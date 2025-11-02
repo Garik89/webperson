@@ -1,9 +1,11 @@
 package ru.taipov.webperson.projectboot.controllers;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import ru.taipov.webperson.projectboot.dto.PersonDTO;
@@ -11,14 +13,11 @@ import ru.taipov.webperson.projectboot.model.Person;
 import ru.taipov.webperson.projectboot.services.PeopleService;
 
 import javax.validation.Valid;
-import java.time.LocalDateTime;
-import java.util.Date;
+import java.util.List;
 
-/**
- * @author Igor Taipov
- */
-@Controller
-@RequestMapping("/people")
+@RestController
+@RequestMapping("/api/people")
+@Tag(name = "People API", description = "API для управления пользователями")
 public class PeopleController {
 
     private final PeopleService peopleService;
@@ -28,69 +27,56 @@ public class PeopleController {
         this.peopleService = peopleService;
     }
 
-    @GetMapping()
-    public String index(Model model) {
-        model.addAttribute("people", peopleService.findAll());
-        return "people/index";
+    @GetMapping
+    @Operation(summary = "Получить всех пользователей", description = "Возвращает список всех пользователей")
+    public ResponseEntity<List<Person>> getAllPeople() {
+        return ResponseEntity.ok(peopleService.findAll());
     }
 
     @GetMapping("/{id}")
-    public String show(@PathVariable("id") int id, Model model) {
-        model.addAttribute("person", peopleService.findOne(id));
-        return "people/show";
+    @Operation(summary = "Получить пользователя по ID", description = "Возвращает пользователя по указанному идентификатору")
+    public ResponseEntity<Person> getPersonById(@PathVariable("id") int id) {
+        Person person = peopleService.findOne(id);
+        return person != null ? ResponseEntity.ok(person) : ResponseEntity.notFound().build();
     }
 
-    @GetMapping("/new")
-    public String newPerson(@ModelAttribute("person") Person person) {
-        return "people/new";
+    @PostMapping
+    @Operation(summary = "Создать нового пользователя", description = "Создает нового пользователя с указанными данными")
+    public ResponseEntity<?> createPerson(@RequestBody @Valid PersonDTO personDTO,
+                                          BindingResult bindingResult) throws JsonProcessingException {
+        if (bindingResult.hasErrors()) {
+            return ResponseEntity.badRequest().body("Ошибка валидации");
+        }
+
+        Person savedPerson = peopleService.save(convertToPerson(personDTO));
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedPerson);
     }
 
+    @PutMapping("/{id}")
+    @Operation(summary = "Обновить пользователя", description = "Обновляет данные пользователя по ID")
+    public ResponseEntity<?> updatePerson(@PathVariable("id") int id,
+                                          @RequestBody @Valid PersonDTO personDTO,
+                                          BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            return ResponseEntity.badRequest().body("Ошибка валидации");
+        }
 
-    @PostMapping()
-    public String create( /*@ModelAttribute("person")*/ @RequestBody @Valid PersonDTO personDTO,
-                         BindingResult bindingResult) throws JsonProcessingException {
-        if (bindingResult.hasErrors())
-            return "people/new";
-
-        peopleService.save(convertToPerson(personDTO));
-        return "redirect:/people";
-    }
-
-
-
-    @GetMapping("/{id}/edit")
-    public String edit(Model model, @PathVariable("id") int id) {
-        model.addAttribute("person", peopleService.findOne(id));
-        return "people/edit";
-    }
-
-    @PatchMapping("/{id}")
-    public String update(@ModelAttribute("person") @Valid Person person, BindingResult bindingResult,
-                         @PathVariable("id") int id) {
-        if (bindingResult.hasErrors())
-            return "people/edit";
-
-        peopleService.update(id, person);
-        return "redirect:/people";
+        Person updatedPerson = peopleService.update(id, convertToPerson(personDTO));
+        return updatedPerson != null ? ResponseEntity.ok(updatedPerson) : ResponseEntity.notFound().build();
     }
 
     @DeleteMapping("/{id}")
-    public String delete(@PathVariable("id") int id) throws JsonProcessingException {
-        peopleService.delete(id);
-        return "redirect:/people";
+    @Operation(summary = "Удалить пользователя", description = "Удаляет пользователя по указанному ID")
+    public ResponseEntity<Void> deletePerson(@PathVariable("id") int id) throws JsonProcessingException {
+        boolean deleted = peopleService.delete(id);
+        return deleted ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
     }
-
 
     private Person convertToPerson(PersonDTO personDTO) {
         Person person = new Person();
-        person.setAge(personDTO.getAge());
         person.setName(personDTO.getName());
+        person.setAge(personDTO.getAge());
         person.setEmail(personDTO.getEmail());
-
-
-
         return person;
     }
-
-
 }

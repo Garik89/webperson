@@ -46,23 +46,26 @@ public class PeopleService {
     }
 
     @Transactional
-    public void save(@Valid Person person) throws JsonProcessingException {
+    public Person save(@Valid Person person) throws JsonProcessingException {
 
         otherconvertToPerson(person);
         peopleRepository.save(person);
 
         sendUserEvent(person.getEmail(), "create");
+        return person;
+
 
     }
 
     @Transactional
-    public void update(int id, @Valid Person updatedPerson) {
+    public Person update(int id, @Valid Person updatedPerson) {
         updatedPerson.setId(id);
         peopleRepository.save(updatedPerson);
+        return  updatedPerson;
     }
 
     @Transactional
-    public void delete(int id) throws JsonProcessingException {
+    public Boolean delete(int id) throws JsonProcessingException {
         Optional<Person> foundPerson = peopleRepository.findById(id);
         peopleRepository.deleteById(id);
 
@@ -70,6 +73,8 @@ public class PeopleService {
         {
             sendUserEvent(foundPerson.orElse(null).getEmail(), "delete");
         }
+
+        return foundPerson.orElse(null) != null;
 
 
     }
