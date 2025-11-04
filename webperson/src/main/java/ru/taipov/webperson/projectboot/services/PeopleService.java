@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.taipov.webperson.projectboot.model.Person;
 import ru.taipov.webperson.projectboot.repositories.PeopleRepository;
 
-import javax.validation.Valid;
+//import javax.validation.Valid;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -19,21 +19,16 @@ import java.util.*;
 /**
  * @author Igor Taipov
  */
+
 @Service
 @Transactional(readOnly = true)
 public class PeopleService {
 
     private final PeopleRepository peopleRepository;
 
-    private final KafkaTemplate<String, String> kafkaTemplate;
-
-    @Value("${kafka.topic}")
-    private String kafkaTopic;
-
     @Autowired
-    public PeopleService(PeopleRepository peopleRepository,KafkaTemplate<String, String> kafkaTemplate ) {
+    public PeopleService(PeopleRepository peopleRepository) {
         this.peopleRepository = peopleRepository;
-        this.kafkaTemplate = kafkaTemplate;
     }
 
     public List<Person> findAll() {
@@ -41,55 +36,27 @@ public class PeopleService {
     }
 
     public Person findOne(int id) {
-        Optional<Person> foundPerson = peopleRepository.findById(id);
-        return foundPerson.orElse(null);
+        return peopleRepository.findById(id).orElse(null);
     }
 
     @Transactional
-    public Person save(@Valid Person person) throws JsonProcessingException {
-
-        otherconvertToPerson(person);
-        peopleRepository.save(person);
-
-        sendUserEvent(person.getEmail(), "create");
-        return person;
-
-
-    }
-
-    @Transactional
-    public Person update(int id, @Valid Person updatedPerson) {
-        updatedPerson.setId(id);
-        peopleRepository.save(updatedPerson);
-        return  updatedPerson;
-    }
-
-    @Transactional
-    public Boolean delete(int id) throws JsonProcessingException {
-        Optional<Person> foundPerson = peopleRepository.findById(id);
-        peopleRepository.deleteById(id);
-
-        if(foundPerson.orElse(null) != null)
-        {
-            sendUserEvent(foundPerson.orElse(null).getEmail(), "delete");
-        }
-
-        return foundPerson.orElse(null) != null;
-
-
-    }
-
-    private void otherconvertToPerson(Person person)
-    {
+    public Person save(Person person) {
         person.setCreated_at(new Date());
-
+        return peopleRepository.save(person);
     }
 
-    private void sendUserEvent(String email, String operation) throws JsonProcessingException {
-        Map<String, String> message = new HashMap<>();
-        message.put("email", email);
-        message.put("operation", operation); // "create" / "delete"
-        String jsonMessage = new ObjectMapper().writeValueAsString(message);
-        kafkaTemplate.send(kafkaTopic, jsonMessage);
+    @Transactional
+    public Person update(int id, Person updatedPerson) {
+        updatedPerson.setId(id);
+        return peopleRepository.save(updatedPerson);
+    }
+
+    @Transactional
+    public Boolean delete(int id) {
+        if (peopleRepository.existsById(id)) {
+            peopleRepository.deleteById(id);
+            return true;
+        }
+        return false;
     }
 }

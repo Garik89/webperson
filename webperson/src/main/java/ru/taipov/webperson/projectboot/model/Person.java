@@ -1,7 +1,7 @@
 package ru.taipov.webperson.projectboot.model;
 
 import jakarta.persistence.*;
-
+import jakarta.validation.constraints.*;
 import java.util.Date;
 import java.util.Objects;
 
