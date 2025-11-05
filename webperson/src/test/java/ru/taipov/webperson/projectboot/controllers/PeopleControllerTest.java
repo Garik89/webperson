@@ -1,44 +1,41 @@
 package ru.taipov.webperson.projectboot.controllers;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
-import ru.taipov.webperson.projectboot.controllers.PeopleController;
-import ru.taipov.webperson.projectboot.dto.PersonDTO;
-import ru.taipov.webperson.projectboot.services.PeopleService;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+@SpringBootTest(properties = "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration")
+@AutoConfigureMockMvc
 
-@WebMvcTest(PeopleController.class)
-public class PeopleControllerTest {
+class PeopleControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
-
-    @MockitoBean
-    private PeopleService peopleService;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
     @Test
-    public void testCreatePersonApi() throws Exception {
-        PersonDTO personDTO = new PersonDTO();
-        personDTO.setName("Ива");
-        personDTO.setAge(30);
-        personDTO.setEmail("ivn@examle.com");
+    void testCreatePersonApi() throws Exception {
+        // Генерируем уникальный email с UUID
+        String uniqueEmail = "testuser_" + java.util.UUID.randomUUID() + "@example.com";
+        System.out.println("Testing with email: " + uniqueEmail);
 
-        String json = objectMapper.writeValueAsString(personDTO);
-
-        mockMvc.perform(post("/people")
+        mockMvc.perform(post("/api/people")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
-                .andExpect(status().is3xxRedirection()); // Ваша логика редиректа
+                        .content("{\"name\":\"Иванввв\",\"age\":30,\"email\":\"" + uniqueEmail + "\"}"))
+                .andDo(result -> {
+                    // Детальный вывод всей информации об ошибке
+                    System.out.println("=== RESPONSE STATUS: " + result.getResponse().getStatus());
+                    System.out.println("=== RESPONSE CONTENT: " + result.getResponse().getContentAsString());
+                    if (result.getResolvedException() != null) {
+                        System.out.println("=== EXCEPTION: " + result.getResolvedException().getMessage());
+                        result.getResolvedException().printStackTrace();
+                    }
+                })
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.name").value("Иванввв"));
     }
 }

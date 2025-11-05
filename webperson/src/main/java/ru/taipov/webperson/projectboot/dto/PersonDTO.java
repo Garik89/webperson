@@ -35,12 +35,15 @@ public class PersonDTO extends RepresentationModel<PersonDTO> {
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
 
+    @NotBlank(message = "Name is required")
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
 
+    @Min(value = 0, message = "Age must be positive")
     public int getAge() { return age; }
     public void setAge(int age) { this.age = age; }
 
+    @Email(message = "Email should be valid")
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
 }
