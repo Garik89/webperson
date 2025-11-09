@@ -1,0 +1,13 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: webperson
+  datasource:
+    url: jdbc:postgresql://postgres:5432/persondb
+    username: postgres
+    password: password
+eureka:
+  client:
+    service-url:
+      default-zone: http://eureka-server:8761/eureka/
